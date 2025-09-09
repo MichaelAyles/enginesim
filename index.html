@@ -16,49 +16,116 @@
             <span class="status">READY</span>
         </div>
 
-        <!-- Sidebar - Control Parameters -->
+        <!-- Sidebar - Control Parameters with Tabs -->
         <div class="sidebar">
-            <div class="panel">
-                <div class="panel-header">Engine Geometry</div>
-                <div class="panel-content">
-                    <div class="control-group">
-                        <label class="control-label">Bore (mm)</label>
-                        <input type="number" class="control-input" value="137" min="50" max="200">
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-button active" data-tab="physical">Physical Config</button>
+                <button class="tab-button" data-tab="ecu">Diesel ECU</button>
+            </div>
+
+            <!-- Physical Configuration Tab -->
+            <div id="physical-tab" class="tab-content active">
+                <div class="panel">
+                    <div class="panel-header">Engine Geometry</div>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label class="control-label">Bore (mm)</label>
+                            <input type="number" class="control-input" value="137" min="50" max="200">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Stroke (mm)</label>
+                            <input type="number" class="control-input" value="150" min="50" max="200">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Compression Ratio</label>
+                            <input type="number" class="control-input" value="16.5" min="12" max="22" step="0.1">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Cylinders</label>
+                            <input type="number" class="control-input" value="6" min="1" max="12">
+                        </div>
                     </div>
-                    <div class="control-group">
-                        <label class="control-label">Stroke (mm)</label>
-                        <input type="number" class="control-input" value="150" min="50" max="200">
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Compression Ratio</label>
-                        <input type="number" class="control-input" value="16.5" min="12" max="22" step="0.1">
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Cylinders</label>
-                        <input type="number" class="control-input" value="6" min="1" max="12">
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">Operating Conditions</div>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label class="control-label">Engine Speed (RPM)</label>
+                            <input type="number" class="control-input" value="1800" min="500" max="8000" step="100">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Load (%)</label>
+                            <input type="number" class="control-input" value="75" min="0" max="100">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Intake Temperature (°C)</label>
+                            <input type="number" class="control-input" value="25" min="-20" max="60">
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="panel">
-                <div class="panel-header">Operating Conditions</div>
-                <div class="panel-content">
-                    <div class="control-group">
-                        <label class="control-label">Engine Speed (RPM)</label>
-                        <input type="number" class="control-input" value="1800" min="500" max="8000" step="100">
+            <!-- ECU Configuration Tab -->
+            <div id="ecu-tab" class="tab-content">
+                <div class="panel">
+                    <div class="panel-header">Fuel Delivery</div>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label class="control-label">Base Injection Timing (°BTDC)</label>
+                            <input type="number" class="ecu-input" value="15" min="5" max="35" step="0.5">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Injection Pressure (bar)</label>
+                            <input type="number" class="ecu-input" value="1800" min="1000" max="2500" step="50">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Pilot Injection (%)</label>
+                            <input type="number" class="ecu-input" value="15" min="0" max="30" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">EGR Rate (%)</label>
+                            <input type="number" class="ecu-input" value="20" min="0" max="40" step="1">
+                        </div>
                     </div>
-                    <div class="control-group">
-                        <label class="control-label">Load (%)</label>
-                        <input type="number" class="control-input" value="75" min="0" max="100">
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">Boost & Air</div>
+                    <div class="panel-content">
+                        <div class="control-group">
+                            <label class="control-label">Target Boost (bar)</label>
+                            <input type="number" class="ecu-input" value="2.0" min="0" max="3.5" step="0.1">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Wastegate Duty (%)</label>
+                            <input type="number" class="ecu-input" value="45" min="0" max="100" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">VGT Position (%)</label>
+                            <input type="number" class="ecu-input" value="60" min="0" max="100" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">MAF Scaling</label>
+                            <input type="number" class="ecu-input" value="1.0" min="0.8" max="1.2" step="0.01">
+                        </div>
                     </div>
-                    <div class="control-group">
-                        <label class="control-label">Intake Temperature (°C)</label>
-                        <input type="number" class="control-input" value="25" min="-20" max="60">
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">Correction Tables</div>
+                    <div class="panel-content">
+                        <button class="btn" style="width: 100%; margin-bottom: 4px;" onclick="showFuelMap()">View Fuel Map</button>
+                        <button class="btn" style="width: 100%; margin-bottom: 4px;" onclick="showVETable()">View VE Table</button>
+                        <button class="btn" style="width: 100%; margin-bottom: 4px;" onclick="showTimingMap()">Timing Map</button>
+                        <button class="btn" style="width: 100%;" onclick="showBoostMap()">Boost Target</button>
                     </div>
                 </div>
             </div>
 
-            <div class="panel">
+            <!-- Control Buttons (always visible) -->
+            <div class="panel control-panel">
                 <div class="panel-header">Control</div>
                 <div class="panel-content">
                     <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;">Run Simulation</button>
@@ -172,6 +239,17 @@
                     intakeTemp: 25
                 };
                 
+                this.ecuParameters = {
+                    injectionTiming: 15,    // °BTDC
+                    injectionPressure: 1800, // bar
+                    pilotInjection: 15,     // %
+                    egrRate: 20,           // %
+                    targetBoost: 2.0,      // bar
+                    wastegateduty: 45,     // %
+                    vgtPosition: 60,       // %
+                    mafScaling: 1.0        // multiplier
+                };
+                
                 this.worker = null;
                 this.isSimulating = false;
                 this.lastResults = null;
@@ -181,6 +259,7 @@
                 this.selectedYParameter = 'pressure';
                 
                 this.setupWorker();
+                this.setupTabs();
                 this.bindEventListeners();
                 this.setupVisualization();
             }
@@ -234,11 +313,31 @@
                 this.updateStatus('Simulation error occurred', 'error');
             }
             
+            setupTabs() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const targetTab = e.target.dataset.tab;
+                        this.switchTab(targetTab);
+                    });
+                });
+            }
+            
+            switchTab(tabName) {
+                // Remove active class from all tabs and buttons
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to selected tab and button
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            }
+            
             bindEventListeners() {
+                // Physical parameter inputs
                 const inputElements = document.querySelectorAll('.control-input');
                 const parameters = ['bore', 'stroke', 'compressionRatio', 'cylinders', 'engineSpeed', 'load', 'intakeTemp'];
                 
-                // Parameter change listeners
                 inputElements.forEach((input, index) => {
                     if (index < parameters.length) {
                         input.addEventListener('input', (e) => {
@@ -247,6 +346,22 @@
                         
                         input.addEventListener('change', (e) => {
                             this.validateParameter(parameters[index], parseFloat(e.target.value), e.target);
+                        });
+                    }
+                });
+                
+                // ECU parameter inputs
+                const ecuInputElements = document.querySelectorAll('.ecu-input');
+                const ecuParameters = ['injectionTiming', 'injectionPressure', 'pilotInjection', 'egrRate', 'targetBoost', 'wastegateduty', 'vgtPosition', 'mafScaling'];
+                
+                ecuInputElements.forEach((input, index) => {
+                    if (index < ecuParameters.length) {
+                        input.addEventListener('input', (e) => {
+                            this.updateECUParameter(ecuParameters[index], parseFloat(e.target.value));
+                        });
+                        
+                        input.addEventListener('change', (e) => {
+                            this.validateECUParameter(ecuParameters[index], parseFloat(e.target.value), e.target);
                         });
                     }
                 });
@@ -271,6 +386,10 @@
             
             updateParameter(parameter, value) {
                 this.parameters[parameter] = value;
+            }
+            
+            updateECUParameter(parameter, value) {
+                this.ecuParameters[parameter] = value;
             }
             
             validateParameter(parameter, value, inputElement) {
@@ -318,6 +437,71 @@
                         if (value < -20 || value > 60) {
                             isValid = false;
                             errorMessage = 'Intake temperature must be between -20-60°C';
+                        }
+                        break;
+                }
+
+                if (!isValid) {
+                    inputElement.style.borderColor = '#f56565';
+                    this.updateStatus(errorMessage, 'error');
+                } else {
+                    inputElement.style.borderColor = '#4a5568';
+                }
+
+                return isValid;
+            }
+            
+            validateECUParameter(parameter, value, inputElement) {
+                let isValid = true;
+                let errorMessage = '';
+
+                switch (parameter) {
+                    case 'injectionTiming':
+                        if (value < 5 || value > 35) {
+                            isValid = false;
+                            errorMessage = 'Injection timing must be between 5-35°BTDC';
+                        }
+                        break;
+                    case 'injectionPressure':
+                        if (value < 1000 || value > 2500) {
+                            isValid = false;
+                            errorMessage = 'Injection pressure must be between 1000-2500 bar';
+                        }
+                        break;
+                    case 'pilotInjection':
+                        if (value < 0 || value > 30) {
+                            isValid = false;
+                            errorMessage = 'Pilot injection must be between 0-30%';
+                        }
+                        break;
+                    case 'egrRate':
+                        if (value < 0 || value > 40) {
+                            isValid = false;
+                            errorMessage = 'EGR rate must be between 0-40%';
+                        }
+                        break;
+                    case 'targetBoost':
+                        if (value < 0 || value > 3.5) {
+                            isValid = false;
+                            errorMessage = 'Target boost must be between 0-3.5 bar';
+                        }
+                        break;
+                    case 'wastegateduty':
+                        if (value < 0 || value > 100) {
+                            isValid = false;
+                            errorMessage = 'Wastegate duty must be between 0-100%';
+                        }
+                        break;
+                    case 'vgtPosition':
+                        if (value < 0 || value > 100) {
+                            isValid = false;
+                            errorMessage = 'VGT position must be between 0-100%';
+                        }
+                        break;
+                    case 'mafScaling':
+                        if (value < 0.8 || value > 1.2) {
+                            isValid = false;
+                            errorMessage = 'MAF scaling must be between 0.8-1.2';
                         }
                         break;
                 }
@@ -851,6 +1035,235 @@
                 link.click();
                 
                 this.updateStatus('Visualization exported', 'ready');
+            }
+            
+            // ECU Table Visualization Methods
+            showFuelMapVisualization() {
+                this.canvas.style.display = 'block';
+                this.dataTableContainer.style.display = 'none';
+                this.clearCanvas();
+                this.drawFuelMap();
+            }
+            
+            showVETableVisualization() {
+                this.canvas.style.display = 'block';
+                this.dataTableContainer.style.display = 'none';
+                this.clearCanvas();
+                this.drawVETable();
+            }
+            
+            showTimingMapVisualization() {
+                this.canvas.style.display = 'block';
+                this.dataTableContainer.style.display = 'none';
+                this.clearCanvas();
+                this.drawTimingMap();
+            }
+            
+            showBoostMapVisualization() {
+                this.canvas.style.display = 'block';
+                this.dataTableContainer.style.display = 'none';
+                this.clearCanvas();
+                this.drawBoostMap();
+            }
+            
+            drawFuelMap() {
+                const margin = 60;
+                const plotWidth = this.canvas.width - 2 * margin;
+                const plotHeight = this.canvas.height - 2 * margin;
+
+                // Diesel fuel map data (RPM vs Load)
+                const rpmAxis = [1000, 1300, 1600, 1900, 2200, 2500, 2800, 3100];
+                const loadAxis = [10, 25, 40, 55, 70, 85, 100];
+                
+                // Fuel quantity map (mg/cycle) - typical diesel values
+                const fuelMap = [
+                    [8, 12, 18, 25, 32, 38, 45],    // 1000 RPM
+                    [10, 15, 22, 30, 38, 46, 55],   // 1300 RPM
+                    [12, 18, 26, 35, 45, 55, 65],   // 1600 RPM
+                    [14, 20, 30, 40, 52, 64, 75],   // 1900 RPM
+                    [16, 22, 32, 43, 56, 70, 82],   // 2200 RPM
+                    [18, 24, 34, 45, 58, 72, 85],   // 2500 RPM
+                    [20, 26, 36, 47, 60, 74, 87],   // 2800 RPM
+                    [22, 28, 38, 49, 62, 76, 89]    // 3100 RPM
+                ];
+                
+                this.drawHeatMap(fuelMap, rpmAxis, loadAxis, 'Fuel Quantity Map (mg/cycle)', 'Load (%)', 'RPM');
+            }
+            
+            drawVETable() {
+                const margin = 60;
+                const plotWidth = this.canvas.width - 2 * margin;
+                const plotHeight = this.canvas.height - 2 * margin;
+
+                // VE table data (RPM vs Load)
+                const rpmAxis = [1000, 1300, 1600, 1900, 2200, 2500, 2800, 3100];
+                const loadAxis = [10, 25, 40, 55, 70, 85, 100];
+                
+                // Volumetric efficiency values (%) - typical diesel values
+                const veMap = [
+                    [78, 82, 86, 88, 90, 87, 82],   // 1000 RPM
+                    [82, 86, 90, 92, 94, 91, 86],   // 1300 RPM
+                    [85, 89, 93, 95, 97, 94, 89],   // 1600 RPM
+                    [88, 92, 96, 98, 98, 95, 90],   // 1900 RPM
+                    [86, 90, 94, 96, 96, 93, 88],   // 2200 RPM
+                    [84, 88, 92, 94, 94, 91, 86],   // 2500 RPM
+                    [80, 84, 88, 90, 90, 87, 82],   // 2800 RPM
+                    [76, 80, 84, 86, 86, 83, 78]    // 3100 RPM
+                ];
+                
+                this.drawHeatMap(veMap, rpmAxis, loadAxis, 'Volumetric Efficiency Table (%)', 'Load (%)', 'RPM');
+            }
+            
+            drawTimingMap() {
+                const margin = 60;
+                const rpmAxis = [1000, 1300, 1600, 1900, 2200, 2500, 2800, 3100];
+                const loadAxis = [10, 25, 40, 55, 70, 85, 100];
+                
+                // Injection timing map (degrees BTDC)
+                const timingMap = [
+                    [8, 10, 12, 14, 16, 18, 20],    // 1000 RPM
+                    [9, 11, 13, 15, 17, 19, 21],    // 1300 RPM
+                    [10, 12, 14, 16, 18, 20, 22],   // 1600 RPM
+                    [11, 13, 15, 17, 19, 21, 23],   // 1900 RPM
+                    [12, 14, 16, 18, 20, 22, 24],   // 2200 RPM
+                    [13, 15, 17, 19, 21, 23, 25],   // 2500 RPM
+                    [14, 16, 18, 20, 22, 24, 26],   // 2800 RPM
+                    [15, 17, 19, 21, 23, 25, 27]    // 3100 RPM
+                ];
+                
+                this.drawHeatMap(timingMap, rpmAxis, loadAxis, 'Injection Timing Map (°BTDC)', 'Load (%)', 'RPM');
+            }
+            
+            drawBoostMap() {
+                const margin = 60;
+                const rpmAxis = [1000, 1300, 1600, 1900, 2200, 2500, 2800, 3100];
+                const loadAxis = [10, 25, 40, 55, 70, 85, 100];
+                
+                // Target boost pressure map (bar)
+                const boostMap = [
+                    [0.0, 0.2, 0.5, 0.8, 1.2, 1.6, 2.0],  // 1000 RPM
+                    [0.0, 0.3, 0.6, 1.0, 1.4, 1.8, 2.2],  // 1300 RPM
+                    [0.0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4],  // 1600 RPM
+                    [0.0, 0.5, 1.0, 1.4, 1.8, 2.2, 2.6],  // 1900 RPM
+                    [0.0, 0.6, 1.1, 1.5, 1.9, 2.3, 2.7],  // 2200 RPM
+                    [0.0, 0.6, 1.2, 1.6, 2.0, 2.4, 2.8],  // 2500 RPM
+                    [0.0, 0.7, 1.3, 1.7, 2.1, 2.5, 2.9],  // 2800 RPM
+                    [0.0, 0.8, 1.4, 1.8, 2.2, 2.6, 3.0]   // 3100 RPM
+                ];
+                
+                this.drawHeatMap(boostMap, rpmAxis, loadAxis, 'Target Boost Pressure Map (bar)', 'Load (%)', 'RPM');
+            }
+            
+            drawHeatMap(dataMap, xAxis, yAxis, title, xLabel, yLabel) {
+                const margin = 60;
+                const plotWidth = this.canvas.width - 2 * margin;
+                const plotHeight = this.canvas.height - 2 * margin;
+                
+                const cellWidth = plotWidth / xAxis.length;
+                const cellHeight = plotHeight / yAxis.length;
+                
+                // Find min/max for color scaling
+                let minVal = Infinity, maxVal = -Infinity;
+                dataMap.forEach(row => {
+                    row.forEach(val => {
+                        minVal = Math.min(minVal, val);
+                        maxVal = Math.max(maxVal, val);
+                    });
+                });
+                
+                // Draw title
+                this.ctx.fillStyle = '#e2e8f0';
+                this.ctx.font = 'bold 16px Consolas';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(title, this.canvas.width / 2, 25);
+                
+                // Draw heat map cells
+                for (let i = 0; i < dataMap.length; i++) {
+                    for (let j = 0; j < dataMap[i].length; j++) {
+                        const value = dataMap[i][j];
+                        const normalizedValue = (value - minVal) / (maxVal - minVal);
+                        
+                        // Color scale from blue (low) to red (high)
+                        const red = Math.floor(255 * normalizedValue);
+                        const blue = Math.floor(255 * (1 - normalizedValue));
+                        const green = Math.floor(128 * (1 - Math.abs(normalizedValue - 0.5) * 2));
+                        
+                        this.ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+                        
+                        const x = margin + j * cellWidth;
+                        const y = margin + i * cellHeight;
+                        
+                        this.ctx.fillRect(x, y, cellWidth, cellHeight);
+                        
+                        // Draw cell border
+                        this.ctx.strokeStyle = '#4a5568';
+                        this.ctx.lineWidth = 1;
+                        this.ctx.strokeRect(x, y, cellWidth, cellHeight);
+                        
+                        // Draw value text
+                        this.ctx.fillStyle = normalizedValue > 0.5 ? '#000000' : '#ffffff';
+                        this.ctx.font = '10px Consolas';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText(value.toFixed(1), x + cellWidth/2, y + cellHeight/2 + 3);
+                    }
+                }
+                
+                // Draw axis labels
+                this.ctx.fillStyle = '#e2e8f0';
+                this.ctx.font = '12px Consolas';
+                this.ctx.textAlign = 'center';
+                
+                // X-axis labels
+                for (let i = 0; i < xAxis.length; i++) {
+                    const x = margin + i * cellWidth + cellWidth/2;
+                    this.ctx.fillText(xAxis[i], x, this.canvas.height - 15);
+                }
+                
+                // Y-axis labels
+                this.ctx.textAlign = 'right';
+                for (let i = 0; i < yAxis.length; i++) {
+                    const y = margin + i * cellHeight + cellHeight/2;
+                    this.ctx.fillText(yAxis[i], margin - 10, y + 3);
+                }
+                
+                // Axis titles
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(xLabel, this.canvas.width / 2, this.canvas.height - 35);
+                
+                this.ctx.save();
+                this.ctx.translate(20, this.canvas.height / 2);
+                this.ctx.rotate(-Math.PI / 2);
+                this.ctx.fillText(yLabel, 0, 0);
+                this.ctx.restore();
+            }
+        }
+        
+        // Global functions for fuel map visualization
+        function showFuelMap() {
+            const simulator = window.engineSimulator;
+            if (simulator) {
+                simulator.showFuelMapVisualization();
+            }
+        }
+        
+        function showVETable() {
+            const simulator = window.engineSimulator;
+            if (simulator) {
+                simulator.showVETableVisualization();
+            }
+        }
+        
+        function showTimingMap() {
+            const simulator = window.engineSimulator;
+            if (simulator) {
+                simulator.showTimingMapVisualization();
+            }
+        }
+        
+        function showBoostMap() {
+            const simulator = window.engineSimulator;
+            if (simulator) {
+                simulator.showBoostMapVisualization();
             }
         }
         
