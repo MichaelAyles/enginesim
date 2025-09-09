@@ -157,46 +157,58 @@
     </div>
 
     <script type="module">
-        import { EngineControlsUI } from './js/ui/controls.js';
+        console.log('Attempting to load EngineControlsUI module...');
         
-        // Initialize the application when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            try {
-                // Initialize the main UI controller
-                const engineControls = new EngineControlsUI();
-                
-                // Make it globally accessible for debugging
-                window.engineControls = engineControls;
-                
-                console.log('Engine Simulator initialized successfully');
-            } catch (error) {
-                console.error('Failed to initialize Engine Simulator:', error);
-                
-                // Fallback to simple demo if modules fail
-                const runButton = document.querySelector('.btn-primary');
-                const statusElement = document.querySelector('.status-ready');
-                
-                if (runButton && statusElement) {
-                    runButton.addEventListener('click', function() {
-                        statusElement.textContent = 'RUNNING...';
-                        statusElement.className = 'status-running';
-                        
-                        setTimeout(() => {
-                            statusElement.textContent = 'READY';
-                            statusElement.className = 'status-ready';
-                            
-                            const dataValues = document.querySelectorAll('.data-value');
-                            const sampleValues = ['150.2', '420.8', '12.5', '38.2', '2.1', '0.8', '0.3', '0.05', '85.2', '2180', '2.8'];
-                            dataValues.forEach((element, index) => {
-                                if (sampleValues[index]) {
-                                    element.textContent = sampleValues[index];
-                                }
-                            });
-                        }, 1500);
-                    });
+        try {
+            const { EngineControlsUI } = await import('./js/ui/controls.js');
+            console.log('Module loaded successfully');
+            
+            // Initialize the application when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                try {
+                    console.log('DOM loaded, initializing EngineControlsUI...');
+                    // Initialize the main UI controller
+                    const engineControls = new EngineControlsUI();
+                    
+                    // Make it globally accessible for debugging
+                    window.engineControls = engineControls;
+                    
+                    console.log('Engine Simulator initialized successfully');
+                } catch (error) {
+                    console.error('Failed to initialize Engine Simulator:', error);
+                    activateFallbackMode(error);
                 }
+            });
+            activateFallbackMode(error);
+        }
+        
+        function activateFallbackMode(error) {
+            console.error('Activating fallback mode due to error:', error);
+            
+            // Fallback to simple demo if modules fail
+            const runButton = document.querySelector('.btn-primary');
+            const statusElement = document.querySelector('.status-ready');
+            
+            if (runButton && statusElement) {
+                runButton.addEventListener('click', function() {
+                    statusElement.textContent = 'RUNNING...';
+                    statusElement.className = 'status-running';
+                    
+                    setTimeout(() => {
+                        statusElement.textContent = 'READY';
+                        statusElement.className = 'status-ready';
+                        
+                        const dataValues = document.querySelectorAll('.data-value');
+                        const sampleValues = ['150.2', '420.8', '12.5', '38.2', '2.1', '0.8', '0.3', '0.05', '85.2', '2180', '2.8'];
+                        dataValues.forEach((element, index) => {
+                            if (sampleValues[index]) {
+                                element.textContent = sampleValues[index];
+                            }
+                        });
+                    }, 1500);
+                });
             }
-        });
+        }
     </script>
 </body>
 </html>
