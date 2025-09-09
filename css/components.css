@@ -88,6 +88,8 @@
     margin-bottom: 8px;
     font-family: 'Consolas', monospace;
     font-size: 11px;
+    max-height: 400px;
+    overflow: auto;
 }
 
 .data-row {
