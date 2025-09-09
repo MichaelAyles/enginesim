@@ -3,6 +3,8 @@
  * Handles user interface interactions and parameter management
  */
 
+import { EngineVisualization } from './visualization.js';
+
 export class EngineControlsUI {
     constructor() {
         this.parameters = {
@@ -17,9 +19,31 @@ export class EngineControlsUI {
         
         this.worker = null;
         this.isSimulating = false;
+        this.visualization = null;
+        this.lastResults = null;
+        
         this.setupWorker();
+        this.setupVisualization();
         this.bindEventListeners();
         this.updateDisplays();
+    }
+
+    /**
+     * Initialize visualization module
+     */
+    setupVisualization() {
+        try {
+            this.visualization = new EngineVisualization();
+            
+            // Handle window resize for visualization
+            window.addEventListener('resize', () => {
+                if (this.visualization) {
+                    setTimeout(() => this.visualization.onResize(), 100);
+                }
+            });
+        } catch (error) {
+            console.error('Failed to initialize visualization:', error);
+        }
     }
 
     /**
@@ -51,6 +75,16 @@ export class EngineControlsUI {
                 this.isSimulating = false;
                 this.updateStatus('Simulation complete', 'ready');
                 this.updateResults(data);
+                this.storeResults(data);
+                
+                // Update visualization with cycle data
+                if (this.visualization && data.cycle) {
+                    this.visualization.updateCycleData(data.cycle);
+                }
+                break;
+                
+            case 'simulation_progress':
+                // Update progress if needed
                 break;
                 
             case 'simulation_error':
@@ -114,6 +148,9 @@ export class EngineControlsUI {
         if (exportButton) {
             exportButton.addEventListener('click', () => this.exportData());
         }
+
+        // Add export visualization button (if needed)
+        this.addVisualizationControls();
     }
 
     /**
@@ -383,6 +420,14 @@ export class EngineControlsUI {
     }
 
     /**
+     * Add visualization-specific controls
+     */
+    addVisualizationControls() {
+        // This could add additional buttons for visualization export, etc.
+        // For now, just ensure proper integration
+    }
+
+    /**
      * Export simulation data
      */
     exportData() {
@@ -391,6 +436,42 @@ export class EngineControlsUI {
             return;
         }
 
+        // Create export menu
+        const exportOptions = [
+            { label: 'Export JSON Data', action: () => this.exportJSONData() },
+            { label: 'Export CSV Data', action: () => this.exportCSVData() },
+            { label: 'Export Visualization', action: () => this.exportVisualization() }
+        ];
+
+        this.showExportMenu(exportOptions);
+    }
+
+    /**
+     * Show export menu
+     */
+    showExportMenu(options) {
+        // Simple implementation - could be enhanced with a proper dropdown
+        const choice = prompt('Export options:\n1. JSON Data\n2. CSV Data\n3. Visualization Image\n\nEnter choice (1-3):');
+        
+        switch (choice) {
+            case '1':
+                this.exportJSONData();
+                break;
+            case '2':
+                this.exportCSVData();
+                break;
+            case '3':
+                this.exportVisualization();
+                break;
+            default:
+                this.updateStatus('Export cancelled', 'ready');
+        }
+    }
+
+    /**
+     * Export JSON data
+     */
+    exportJSONData() {
         const exportData = {
             parameters: this.parameters,
             results: this.lastResults,
@@ -405,7 +486,50 @@ export class EngineControlsUI {
         link.download = `engine_simulation_${Date.now()}.json`;
         link.click();
         
-        this.updateStatus('Data exported', 'ready');
+        this.updateStatus('JSON data exported', 'ready');
+    }
+
+    /**
+     * Export CSV data
+     */
+    exportCSVData() {
+        if (!this.lastResults || !this.lastResults.cycle) {
+            this.updateStatus('No cycle data to export', 'error');
+            return;
+        }
+
+        const cycleData = this.lastResults.cycle;
+        const headers = Object.keys(cycleData[0]);
+        
+        let csvContent = headers.join(',') + '\n';
+        
+        cycleData.forEach(row => {
+            const values = headers.map(header => {
+                const value = row[header];
+                return typeof value === 'string' ? `"${value}"` : value;
+            });
+            csvContent += values.join(',') + '\n';
+        });
+
+        const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(csvBlob);
+        link.download = `engine_cycle_data_${Date.now()}.csv`;
+        link.click();
+        
+        this.updateStatus('CSV data exported', 'ready');
+    }
+
+    /**
+     * Export visualization
+     */
+    exportVisualization() {
+        if (this.visualization) {
+            this.visualization.exportVisualization();
+            this.updateStatus('Visualization exported', 'ready');
+        } else {
+            this.updateStatus('No visualization to export', 'error');
+        }
     }
 
     /**
@@ -423,12 +547,24 @@ export class EngineControlsUI {
     }
 
     /**
+     * Get visualization instance (for external access)
+     */
+    getVisualization() {
+        return this.visualization;
+    }
+
+    /**
      * Cleanup resources
      */
     destroy() {
         if (this.worker) {
             this.worker.terminate();
             this.worker = null;
+        }
+        
+        if (this.visualization) {
+            // Cleanup visualization resources if needed
+            this.visualization = null;
         }
     }
 }
