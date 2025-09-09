@@ -156,59 +156,551 @@
         </div>
     </div>
 
-    <script type="module">
-        console.log('Attempting to load EngineControlsUI module...');
+    <script>
+        // Inline Engine Simulator (no modules needed)
+        console.log('Initializing inline engine simulator...');
         
-        try {
-            const { EngineControlsUI } = await import('./js/ui/controls.js');
-            console.log('Module loaded successfully');
+        class EngineSimulator {
+            constructor() {
+                this.parameters = {
+                    bore: 86,
+                    stroke: 86,
+                    compressionRatio: 10.5,
+                    cylinders: 4,
+                    engineSpeed: 2000,
+                    load: 75,
+                    intakeTemp: 25
+                };
+                
+                this.worker = null;
+                this.isSimulating = false;
+                this.lastResults = null;
+                this.canvas = null;
+                this.ctx = null;
+                this.chartType = 'pv-diagram';
+                this.selectedYParameter = 'pressure';
+                
+                this.setupWorker();
+                this.bindEventListeners();
+                this.setupVisualization();
+            }
             
-            // Initialize the application when DOM is loaded
-            document.addEventListener('DOMContentLoaded', function() {
+            setupWorker() {
                 try {
-                    console.log('DOM loaded, initializing EngineControlsUI...');
-                    // Initialize the main UI controller
-                    const engineControls = new EngineControlsUI();
-                    
-                    // Make it globally accessible for debugging
-                    window.engineControls = engineControls;
-                    
-                    console.log('Engine Simulator initialized successfully');
+                    this.worker = new Worker('js/workers/simulation.worker.js');
+                    this.worker.addEventListener('message', (event) => this.handleWorkerMessage(event));
+                    this.worker.addEventListener('error', (error) => this.handleWorkerError(error));
+                    console.log('Worker initialized successfully');
                 } catch (error) {
-                    console.error('Failed to initialize Engine Simulator:', error);
-                    activateFallbackMode(error);
+                    console.error('Failed to initialize worker:', error);
+                    this.updateStatus('Worker initialization failed', 'error');
                 }
-            });
-            activateFallbackMode(error);
-        }
-        
-        function activateFallbackMode(error) {
-            console.error('Activating fallback mode due to error:', error);
+            }
             
-            // Fallback to simple demo if modules fail
-            const runButton = document.querySelector('.btn-primary');
-            const statusElement = document.querySelector('.status-ready');
-            
-            if (runButton && statusElement) {
-                runButton.addEventListener('click', function() {
-                    statusElement.textContent = 'RUNNING...';
-                    statusElement.className = 'status-running';
-                    
-                    setTimeout(() => {
-                        statusElement.textContent = 'READY';
-                        statusElement.className = 'status-ready';
+            handleWorkerMessage(event) {
+                const { type, data } = event.data;
+                
+                switch (type) {
+                    case 'simulation_started':
+                        this.updateStatus('Simulation running...', 'running');
+                        break;
                         
-                        const dataValues = document.querySelectorAll('.data-value');
-                        const sampleValues = ['150.2', '420.8', '12.5', '38.2', '2.1', '0.8', '0.3', '0.05', '85.2', '2180', '2.8'];
-                        dataValues.forEach((element, index) => {
-                            if (sampleValues[index]) {
-                                element.textContent = sampleValues[index];
-                            }
+                    case 'simulation_complete':
+                        this.isSimulating = false;
+                        this.updateStatus('Simulation complete', 'ready');
+                        this.updateResults(data);
+                        this.lastResults = data;
+                        
+                        // Update visualization with cycle data
+                        if (data.cycle) {
+                            this.updateVisualization(data.cycle);
+                        }
+                        break;
+                        
+                    case 'simulation_progress':
+                        // Update progress if needed
+                        break;
+                        
+                    case 'simulation_error':
+                        this.isSimulating = false;
+                        this.updateStatus(`Error: ${data.error}`, 'error');
+                        break;
+                }
+            }
+            
+            handleWorkerError(error) {
+                console.error('Worker error:', error);
+                this.isSimulating = false;
+                this.updateStatus('Simulation error occurred', 'error');
+            }
+            
+            bindEventListeners() {
+                const inputElements = document.querySelectorAll('.control-input');
+                const parameters = ['bore', 'stroke', 'compressionRatio', 'cylinders', 'engineSpeed', 'load', 'intakeTemp'];
+                
+                // Parameter change listeners
+                inputElements.forEach((input, index) => {
+                    if (index < parameters.length) {
+                        input.addEventListener('input', (e) => {
+                            this.updateParameter(parameters[index], parseFloat(e.target.value));
                         });
-                    }, 1500);
+                        
+                        input.addEventListener('change', (e) => {
+                            this.validateParameter(parameters[index], parseFloat(e.target.value), e.target);
+                        });
+                    }
+                });
+                
+                // Control buttons
+                const runButton = document.querySelector('.btn-primary');
+                const resetButton = document.querySelector('.btn:not(.btn-primary):first-of-type');
+                const exportButton = document.querySelector('.btn:not(.btn-primary):last-of-type');
+                
+                if (runButton) {
+                    runButton.addEventListener('click', () => this.runSimulation());
+                }
+                
+                if (resetButton) {
+                    resetButton.addEventListener('click', () => this.resetParameters());
+                }
+                
+                if (exportButton) {
+                    exportButton.addEventListener('click', () => this.exportData());
+                }
+            }
+            
+            updateParameter(parameter, value) {
+                this.parameters[parameter] = value;
+            }
+            
+            validateParameter(parameter, value, inputElement) {
+                let isValid = true;
+                let errorMessage = '';
+
+                switch (parameter) {
+                    case 'bore':
+                        if (value < 50 || value > 150) {
+                            isValid = false;
+                            errorMessage = 'Bore must be between 50-150mm';
+                        }
+                        break;
+                    case 'stroke':
+                        if (value < 50 || value > 150) {
+                            isValid = false;
+                            errorMessage = 'Stroke must be between 50-150mm';
+                        }
+                        break;
+                    case 'compressionRatio':
+                        if (value < 8 || value > 15) {
+                            isValid = false;
+                            errorMessage = 'Compression ratio must be between 8-15';
+                        }
+                        break;
+                    case 'cylinders':
+                        if (value < 1 || value > 12) {
+                            isValid = false;
+                            errorMessage = 'Cylinders must be between 1-12';
+                        }
+                        break;
+                    case 'engineSpeed':
+                        if (value < 500 || value > 8000) {
+                            isValid = false;
+                            errorMessage = 'Engine speed must be between 500-8000 rpm';
+                        }
+                        break;
+                    case 'load':
+                        if (value < 0 || value > 100) {
+                            isValid = false;
+                            errorMessage = 'Load must be between 0-100%';
+                        }
+                        break;
+                    case 'intakeTemp':
+                        if (value < -20 || value > 60) {
+                            isValid = false;
+                            errorMessage = 'Intake temperature must be between -20-60°C';
+                        }
+                        break;
+                }
+
+                if (!isValid) {
+                    inputElement.style.borderColor = '#f56565';
+                    this.updateStatus(errorMessage, 'error');
+                } else {
+                    inputElement.style.borderColor = '#4a5568';
+                }
+
+                return isValid;
+            }
+            
+            runSimulation() {
+                if (this.isSimulating || !this.worker) {
+                    return;
+                }
+
+                this.isSimulating = true;
+                
+                // Convert temperature to Kelvin for simulation
+                const simulationParams = {
+                    ...this.parameters,
+                    intakeTemp: this.parameters.intakeTemp + 273.15
+                };
+
+                // Send simulation request to worker
+                this.worker.postMessage({
+                    type: 'simulate',
+                    data: simulationParams
                 });
             }
+            
+            resetParameters() {
+                const defaultParams = {
+                    bore: 86,
+                    stroke: 86,
+                    compressionRatio: 10.5,
+                    cylinders: 4,
+                    engineSpeed: 2000,
+                    load: 75,
+                    intakeTemp: 25
+                };
+
+                this.parameters = { ...defaultParams };
+                
+                const inputs = document.querySelectorAll('.control-input');
+                const values = [86, 86, 10.5, 4, 2000, 75, 25];
+                
+                inputs.forEach((input, index) => {
+                    if (index < values.length) {
+                        input.value = values[index];
+                        input.style.borderColor = '#4a5568';
+                    }
+                });
+
+                this.clearResults();
+                this.updateStatus('Parameters reset', 'ready');
+            }
+            
+            updateResults(data) {
+                const { performance, emissions } = data;
+                
+                const dataValues = document.querySelectorAll('.data-value');
+                const values = [
+                    performance.power,
+                    performance.torque,
+                    performance.bmep,
+                    performance.efficiency,
+                    emissions.nox,
+                    emissions.co,
+                    emissions.hc,
+                    emissions.pm,
+                    performance.maxPressure,
+                    performance.maxTemperature,
+                    '---' // Pumping loss placeholder
+                ];
+                
+                dataValues.forEach((element, index) => {
+                    if (index < values.length) {
+                        element.textContent = typeof values[index] === 'number' ? 
+                            Math.round(values[index] * 10) / 10 : values[index];
+                    }
+                });
+            }
+            
+            clearResults() {
+                const dataValues = document.querySelectorAll('.data-value');
+                dataValues.forEach(element => {
+                    element.textContent = '---';
+                });
+            }
+            
+            updateStatus(message, type = 'ready') {
+                const statusElement = document.querySelector('.header .status');
+                const statusBarElement = document.querySelector('.status-ready');
+                
+                if (statusElement) {
+                    statusElement.textContent = message.toUpperCase();
+                }
+                
+                if (statusBarElement) {
+                    statusBarElement.textContent = message;
+                    statusBarElement.className = `status-${type}`;
+                }
+            }
+            
+            setupVisualization() {
+                const canvasArea = document.querySelector('.canvas-area');
+                if (!canvasArea) return;
+
+                // Clear existing content
+                canvasArea.innerHTML = '';
+
+                // Create main canvas
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = canvasArea.clientWidth - 20;
+                this.canvas.height = canvasArea.clientHeight - 20;
+                this.canvas.style.border = '1px solid #4a5568';
+                this.canvas.style.backgroundColor = '#0f1419';
+                
+                this.ctx = this.canvas.getContext('2d');
+                canvasArea.appendChild(this.canvas);
+
+                // Create chart controls
+                this.createChartControls(canvasArea);
+            }
+            
+            createChartControls(canvasArea) {
+                const controlsDiv = document.createElement('div');
+                controlsDiv.style.cssText = `
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(26, 32, 44, 0.9);
+                    border: 1px solid #4a5568;
+                    border-radius: 4px;
+                    padding: 8px;
+                    font-size: 11px;
+                    z-index: 10;
+                `;
+
+                const chartTypeSelect = document.createElement('select');
+                chartTypeSelect.style.cssText = `
+                    background: #1a202c; color: #e2e8f0; border: 1px solid #4a5568;
+                    padding: 2px; font-size: 11px; margin-bottom: 8px;
+                `;
+                chartTypeSelect.innerHTML = `
+                    <option value="pv-diagram">P-V Diagram</option>
+                    <option value="angle-plot">Angle Plot</option>
+                `;
+                
+                chartTypeSelect.addEventListener('change', (e) => {
+                    this.chartType = e.target.value;
+                    if (this.lastResults) {
+                        this.updateVisualization(this.lastResults.cycle);
+                    }
+                });
+
+                controlsDiv.appendChild(chartTypeSelect);
+                canvasArea.appendChild(controlsDiv);
+            }
+            
+            updateVisualization(cycleData) {
+                if (!this.ctx || !cycleData || !cycleData.length) return;
+
+                this.clearCanvas();
+
+                if (this.chartType === 'pv-diagram') {
+                    this.drawPVDiagram(cycleData);
+                } else {
+                    this.drawAnglePlot(cycleData);
+                }
+            }
+            
+            clearCanvas() {
+                this.ctx.fillStyle = '#0f1419';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            drawPVDiagram(cycleData) {
+                const margin = 50;
+                const plotWidth = this.canvas.width - 2 * margin;
+                const plotHeight = this.canvas.height - 2 * margin;
+
+                const volumes = cycleData.map(d => d.volume);
+                const pressures = cycleData.map(d => d.pressure);
+                
+                const vMin = Math.min(...volumes);
+                const vMax = Math.max(...volumes);
+                const pMin = Math.min(...pressures);
+                const pMax = Math.max(...pressures);
+
+                const vRange = vMax - vMin;
+                const pRange = pMax - pMin;
+                const vMinPlot = vMin - vRange * 0.1;
+                const vMaxPlot = vMax + vRange * 0.1;
+                const pMinPlot = pMin - pRange * 0.1;
+                const pMaxPlot = pMax + pRange * 0.1;
+
+                // Draw axes
+                this.ctx.strokeStyle = '#4a5568';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.moveTo(margin, margin);
+                this.ctx.lineTo(margin, this.canvas.height - margin);
+                this.ctx.lineTo(this.canvas.width - margin, this.canvas.height - margin);
+                this.ctx.stroke();
+
+                // Draw P-V curve
+                this.ctx.strokeStyle = '#68d391';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+
+                for (let i = 0; i < cycleData.length; i++) {
+                    const data = cycleData[i];
+                    const x = margin + ((data.volume - vMinPlot) / (vMaxPlot - vMinPlot)) * plotWidth;
+                    const y = this.canvas.height - margin - ((data.pressure - pMinPlot) / (pMaxPlot - pMinPlot)) * plotHeight;
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                this.ctx.stroke();
+
+                // Draw labels
+                this.ctx.fillStyle = '#a0aec0';
+                this.ctx.font = '12px Consolas';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Volume (cm³)', this.canvas.width / 2, this.canvas.height - 10);
+
+                this.ctx.save();
+                this.ctx.translate(15, this.canvas.height / 2);
+                this.ctx.rotate(-Math.PI / 2);
+                this.ctx.fillText('Pressure (bar)', 0, 0);
+                this.ctx.restore();
+            }
+            
+            drawAnglePlot(cycleData) {
+                const margin = 50;
+                const plotWidth = this.canvas.width - 2 * margin;
+                const plotHeight = this.canvas.height - 2 * margin;
+
+                const angles = cycleData.map(d => d.angle);
+                const values = cycleData.map(d => d[this.selectedYParameter]);
+                
+                const angleMin = Math.min(...angles);
+                const angleMax = Math.max(...angles);
+                const valueMin = Math.min(...values);
+                const valueMax = Math.max(...values);
+
+                const valueRange = valueMax - valueMin;
+                const valueMinPlot = valueMin - valueRange * 0.1;
+                const valueMaxPlot = valueMax + valueRange * 0.1;
+
+                // Draw axes
+                this.ctx.strokeStyle = '#4a5568';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.moveTo(margin, margin);
+                this.ctx.lineTo(margin, this.canvas.height - margin);
+                this.ctx.lineTo(this.canvas.width - margin, this.canvas.height - margin);
+                this.ctx.stroke();
+
+                // Draw data line
+                this.ctx.strokeStyle = '#63b3ed';
+                this.ctx.lineWidth = 1.5;
+                this.ctx.beginPath();
+
+                for (let i = 0; i < cycleData.length; i++) {
+                    const data = cycleData[i];
+                    const x = margin + ((data.angle - angleMin) / (angleMax - angleMin)) * plotWidth;
+                    const y = this.canvas.height - margin - ((data[this.selectedYParameter] - valueMinPlot) / (valueMaxPlot - valueMinPlot)) * plotHeight;
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                this.ctx.stroke();
+
+                // Draw labels
+                this.ctx.fillStyle = '#a0aec0';
+                this.ctx.font = '12px Consolas';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Crank Angle (degrees)', this.canvas.width / 2, this.canvas.height - 10);
+            }
+            
+            exportData() {
+                if (!this.lastResults) {
+                    this.updateStatus('No data to export', 'error');
+                    return;
+                }
+
+                const choice = prompt('Export options:\n1. JSON Data\n2. CSV Data\n3. Visualization Image\n\nEnter choice (1-3):');
+                
+                switch (choice) {
+                    case '1':
+                        this.exportJSONData();
+                        break;
+                    case '2':
+                        this.exportCSVData();
+                        break;
+                    case '3':
+                        this.exportVisualization();
+                        break;
+                    default:
+                        this.updateStatus('Export cancelled', 'ready');
+                }
+            }
+            
+            exportJSONData() {
+                const exportData = {
+                    parameters: this.parameters,
+                    results: this.lastResults,
+                    timestamp: new Date().toISOString()
+                };
+
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `engine_simulation_${Date.now()}.json`;
+                link.click();
+                
+                this.updateStatus('JSON data exported', 'ready');
+            }
+            
+            exportCSVData() {
+                if (!this.lastResults || !this.lastResults.cycle) {
+                    this.updateStatus('No cycle data to export', 'error');
+                    return;
+                }
+
+                const cycleData = this.lastResults.cycle;
+                const headers = Object.keys(cycleData[0]);
+                
+                let csvContent = headers.join(',') + '\n';
+                
+                cycleData.forEach(row => {
+                    const values = headers.map(header => {
+                        const value = row[header];
+                        return typeof value === 'string' ? `"${value}"` : value;
+                    });
+                    csvContent += values.join(',') + '\n';
+                });
+
+                const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(csvBlob);
+                link.download = `engine_cycle_data_${Date.now()}.csv`;
+                link.click();
+                
+                this.updateStatus('CSV data exported', 'ready');
+            }
+            
+            exportVisualization() {
+                if (!this.canvas) return;
+
+                const link = document.createElement('a');
+                link.download = `engine_${this.chartType}_${Date.now()}.png`;
+                link.href = this.canvas.toDataURL();
+                link.click();
+                
+                this.updateStatus('Visualization exported', 'ready');
+            }
         }
+        
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const engineSimulator = new EngineSimulator();
+                window.engineSimulator = engineSimulator;
+                console.log('Engine Simulator initialized successfully (inline version)');
+            } catch (error) {
+                console.error('Failed to initialize Engine Simulator:', error);
+            }
+        });
     </script>
 </body>
 </html>
