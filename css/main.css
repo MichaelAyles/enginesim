@@ -1,0 +1,74 @@
+/* Engineering Tool Aesthetic - Inspired by Simulink/LabVIEW */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    background-color: #2d3748;
+    color: #e2e8f0;
+    overflow: hidden;
+}
+
+/* Main Layout Grid */
+.main-container {
+    display: grid;
+    grid-template-areas: 
+        "header header header"
+        "sidebar canvas properties"
+        "status status status";
+    grid-template-rows: 40px 1fr 24px;
+    grid-template-columns: 280px 1fr 280px;
+    height: 100vh;
+}
+
+/* Header Bar */
+.header {
+    grid-area: header;
+    background: linear-gradient(to bottom, #4a5568, #2d3748);
+    border-bottom: 1px solid #1a202c;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.header .title {
+    color: #63b3ed;
+}
+
+.header .spacer {
+    flex: 1;
+}
+
+.header .status {
+    color: #68d391;
+    font-size: 12px;
+}
+
+/* Status Bar */
+.status-bar {
+    grid-area: status;
+    background: linear-gradient(to bottom, #2d3748, #1a202c);
+    border-top: 1px solid #4a5568;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 11px;
+}
+
+.status-item {
+    margin-right: 20px;
+    color: #a0aec0;
+}
+
+.status-ready {
+    color: #68d391;
+}
+
+.status-error {
+    color: #f56565;
+}

@@ -1,0 +1,140 @@
+/* Sidebar - Control Parameters */
+.sidebar {
+    grid-area: sidebar;
+    background-color: #1a202c;
+    border-right: 1px solid #2d3748;
+    padding: 8px;
+    overflow-y: auto;
+}
+
+.panel {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+    margin-bottom: 8px;
+    border-radius: 3px;
+}
+
+.panel-header {
+    background: linear-gradient(to bottom, #4a5568, #2d3748);
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #cbd5e0;
+    border-bottom: 1px solid #1a202c;
+}
+
+.panel-content {
+    padding: 8px;
+}
+
+.control-group {
+    margin-bottom: 12px;
+}
+
+.control-label {
+    display: block;
+    font-size: 11px;
+    color: #a0aec0;
+    margin-bottom: 3px;
+}
+
+.control-input {
+    width: 100%;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+    color: #e2e8f0;
+    padding: 4px 6px;
+    font-size: 11px;
+    font-family: inherit;
+}
+
+.control-input:focus {
+    outline: none;
+    border-color: #63b3ed;
+}
+
+/* Main Canvas Area */
+.canvas-area {
+    grid-area: canvas;
+    background-color: #1a202c;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.visualization-placeholder {
+    border: 2px dashed #4a5568;
+    border-radius: 4px;
+    padding: 40px;
+    text-align: center;
+    color: #718096;
+    font-size: 14px;
+}
+
+/* Properties Panel */
+.properties {
+    grid-area: properties;
+    background-color: #1a202c;
+    border-left: 1px solid #2d3748;
+    padding: 8px;
+    overflow-y: auto;
+}
+
+.data-display {
+    background-color: #0f1419;
+    border: 1px solid #2d3748;
+    padding: 8px;
+    margin-bottom: 8px;
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.data-label {
+    color: #a0aec0;
+}
+
+.data-value {
+    color: #68d391;
+    font-weight: bold;
+}
+
+.data-unit {
+    color: #718096;
+    font-size: 10px;
+}
+
+/* Button Styles */
+.btn {
+    background: linear-gradient(to bottom, #4a5568, #2d3748);
+    border: 1px solid #2d3748;
+    color: #e2e8f0;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 2px;
+}
+
+.btn:hover {
+    background: linear-gradient(to bottom, #2d3748, #1a202c);
+}
+
+.btn:active {
+    background: linear-gradient(to bottom, #1a202c, #2d3748);
+}
+
+.btn-primary {
+    background: linear-gradient(to bottom, #3182ce, #2c5282);
+    border-color: #2c5282;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(to bottom, #2c5282, #2a4365);
+}

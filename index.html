@@ -4,223 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engine Simulator v1.0</title>
-    <style>
-        /* Engineering Tool Aesthetic - Inspired by Simulink/LabVIEW */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            background-color: #2d3748;
-            color: #e2e8f0;
-            overflow: hidden;
-        }
-
-        /* Main Layout Grid */
-        .main-container {
-            display: grid;
-            grid-template-areas: 
-                "header header header"
-                "sidebar canvas properties"
-                "status status status";
-            grid-template-rows: 40px 1fr 24px;
-            grid-template-columns: 280px 1fr 280px;
-            height: 100vh;
-        }
-
-        /* Header Bar */
-        .header {
-            grid-area: header;
-            background: linear-gradient(to bottom, #4a5568, #2d3748);
-            border-bottom: 1px solid #1a202c;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .header .title {
-            color: #63b3ed;
-        }
-
-        .header .spacer {
-            flex: 1;
-        }
-
-        .header .status {
-            color: #68d391;
-            font-size: 12px;
-        }
-
-        /* Sidebar - Control Parameters */
-        .sidebar {
-            grid-area: sidebar;
-            background-color: #1a202c;
-            border-right: 1px solid #2d3748;
-            padding: 8px;
-            overflow-y: auto;
-        }
-
-        .panel {
-            background-color: #2d3748;
-            border: 1px solid #4a5568;
-            margin-bottom: 8px;
-            border-radius: 3px;
-        }
-
-        .panel-header {
-            background: linear-gradient(to bottom, #4a5568, #2d3748);
-            padding: 6px 10px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #cbd5e0;
-            border-bottom: 1px solid #1a202c;
-        }
-
-        .panel-content {
-            padding: 8px;
-        }
-
-        .control-group {
-            margin-bottom: 12px;
-        }
-
-        .control-label {
-            display: block;
-            font-size: 11px;
-            color: #a0aec0;
-            margin-bottom: 3px;
-        }
-
-        .control-input {
-            width: 100%;
-            background-color: #1a202c;
-            border: 1px solid #4a5568;
-            color: #e2e8f0;
-            padding: 4px 6px;
-            font-size: 11px;
-            font-family: inherit;
-        }
-
-        .control-input:focus {
-            outline: none;
-            border-color: #63b3ed;
-        }
-
-        /* Main Canvas Area */
-        .canvas-area {
-            grid-area: canvas;
-            background-color: #1a202c;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .visualization-placeholder {
-            border: 2px dashed #4a5568;
-            border-radius: 4px;
-            padding: 40px;
-            text-align: center;
-            color: #718096;
-            font-size: 14px;
-        }
-
-        /* Properties Panel */
-        .properties {
-            grid-area: properties;
-            background-color: #1a202c;
-            border-left: 1px solid #2d3748;
-            padding: 8px;
-            overflow-y: auto;
-        }
-
-        .data-display {
-            background-color: #0f1419;
-            border: 1px solid #2d3748;
-            padding: 8px;
-            margin-bottom: 8px;
-            font-family: 'Consolas', monospace;
-            font-size: 11px;
-        }
-
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-
-        .data-label {
-            color: #a0aec0;
-        }
-
-        .data-value {
-            color: #68d391;
-            font-weight: bold;
-        }
-
-        .data-unit {
-            color: #718096;
-            font-size: 10px;
-        }
-
-        /* Status Bar */
-        .status-bar {
-            grid-area: status;
-            background: linear-gradient(to bottom, #2d3748, #1a202c);
-            border-top: 1px solid #4a5568;
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            font-size: 11px;
-        }
-
-        .status-item {
-            margin-right: 20px;
-            color: #a0aec0;
-        }
-
-        .status-ready {
-            color: #68d391;
-        }
-
-        .status-error {
-            color: #f56565;
-        }
-
-        /* Button Styles */
-        .btn {
-            background: linear-gradient(to bottom, #4a5568, #2d3748);
-            border: 1px solid #2d3748;
-            color: #e2e8f0;
-            padding: 4px 12px;
-            font-size: 11px;
-            font-family: inherit;
-            cursor: pointer;
-            border-radius: 2px;
-        }
-
-        .btn:hover {
-            background: linear-gradient(to bottom, #2d3748, #1a202c);
-        }
-
-        .btn:active {
-            background: linear-gradient(to bottom, #1a202c, #2d3748);
-        }
-
-        .btn-primary {
-            background: linear-gradient(to bottom, #3182ce, #2c5282);
-            border-color: #2c5282;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(to bottom, #2c5282, #2a4365);
-        }
-    </style>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
     <div class="main-container">
@@ -371,31 +156,46 @@
         </div>
     </div>
 
-    <script>
-        // Basic interactivity placeholder
+    <script type="module">
+        import { EngineControlsUI } from './js/ui/controls.js';
+        
+        // Initialize the application when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            const runButton = document.querySelector('.btn-primary');
-            const statusElement = document.querySelector('.status-ready');
-            
-            runButton.addEventListener('click', function() {
-                statusElement.textContent = 'RUNNING...';
-                statusElement.className = 'status-error';
+            try {
+                // Initialize the main UI controller
+                const engineControls = new EngineControlsUI();
                 
-                // Simulate computation
-                setTimeout(() => {
-                    statusElement.textContent = 'READY';
-                    statusElement.className = 'status-ready';
-                    
-                    // Update placeholder values
-                    const dataValues = document.querySelectorAll('.data-value');
-                    dataValues.forEach((element, index) => {
-                        const sampleValues = ['150.2', '420.8', '12.5', '38.2', '2.1', '0.8', '0.3', '0.05', '85.2', '2180', '2.8'];
-                        if (sampleValues[index]) {
-                            element.textContent = sampleValues[index];
-                        }
+                // Make it globally accessible for debugging
+                window.engineControls = engineControls;
+                
+                console.log('Engine Simulator initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize Engine Simulator:', error);
+                
+                // Fallback to simple demo if modules fail
+                const runButton = document.querySelector('.btn-primary');
+                const statusElement = document.querySelector('.status-ready');
+                
+                if (runButton && statusElement) {
+                    runButton.addEventListener('click', function() {
+                        statusElement.textContent = 'RUNNING...';
+                        statusElement.className = 'status-running';
+                        
+                        setTimeout(() => {
+                            statusElement.textContent = 'READY';
+                            statusElement.className = 'status-ready';
+                            
+                            const dataValues = document.querySelectorAll('.data-value');
+                            const sampleValues = ['150.2', '420.8', '12.5', '38.2', '2.1', '0.8', '0.3', '0.05', '85.2', '2180', '2.8'];
+                            dataValues.forEach((element, index) => {
+                                if (sampleValues[index]) {
+                                    element.textContent = sampleValues[index];
+                                }
+                            });
+                        }, 1500);
                     });
-                }, 1500);
-            });
+                }
+            }
         });
     </script>
 </body>

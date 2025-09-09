@@ -1,0 +1,434 @@
+/**
+ * UI Controls Module
+ * Handles user interface interactions and parameter management
+ */
+
+export class EngineControlsUI {
+    constructor() {
+        this.parameters = {
+            bore: 86,
+            stroke: 86,
+            compressionRatio: 10.5,
+            cylinders: 4,
+            engineSpeed: 2000,
+            load: 75,
+            intakeTemp: 25
+        };
+        
+        this.worker = null;
+        this.isSimulating = false;
+        this.setupWorker();
+        this.bindEventListeners();
+        this.updateDisplays();
+    }
+
+    /**
+     * Initialize and setup Web Worker
+     */
+    setupWorker() {
+        try {
+            this.worker = new Worker('js/workers/simulation.worker.js');
+            this.worker.addEventListener('message', this.handleWorkerMessage.bind(this));
+            this.worker.addEventListener('error', this.handleWorkerError.bind(this));
+        } catch (error) {
+            console.error('Failed to initialize worker:', error);
+            this.updateStatus('Worker initialization failed', 'error');
+        }
+    }
+
+    /**
+     * Handle messages from the Web Worker
+     */
+    handleWorkerMessage(event) {
+        const { type, data } = event.data;
+        
+        switch (type) {
+            case 'simulation_started':
+                this.updateStatus('Simulation running...', 'running');
+                break;
+                
+            case 'simulation_complete':
+                this.isSimulating = false;
+                this.updateStatus('Simulation complete', 'ready');
+                this.updateResults(data);
+                break;
+                
+            case 'simulation_error':
+                this.isSimulating = false;
+                this.updateStatus(`Error: ${data.error}`, 'error');
+                break;
+        }
+    }
+
+    /**
+     * Handle Worker errors
+     */
+    handleWorkerError(error) {
+        console.error('Worker error:', error);
+        this.isSimulating = false;
+        this.updateStatus('Simulation error occurred', 'error');
+    }
+
+    /**
+     * Bind event listeners to UI controls
+     */
+    bindEventListeners() {
+        // Get all parameter input elements
+        const inputs = {
+            bore: document.querySelector('input[value="86"]:first-of-type'),
+            stroke: document.querySelector('input[value="86"]:last-of-type'),
+            compressionRatio: document.querySelector('input[value="10.5"]'),
+            cylinders: document.querySelector('input[value="4"]'),
+            engineSpeed: document.querySelector('input[value="2000"]'),
+            load: document.querySelector('input[value="75"]'),
+            intakeTemp: document.querySelector('input[value="25"]')
+        };
+
+        // Add event listeners for parameter changes
+        Object.keys(inputs).forEach(param => {
+            const input = inputs[param];
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    this.updateParameter(param, parseFloat(e.target.value));
+                });
+                
+                input.addEventListener('change', (e) => {
+                    this.validateParameter(param, parseFloat(e.target.value), e.target);
+                });
+            }
+        });
+
+        // Control buttons
+        const runButton = document.querySelector('.btn-primary');
+        const resetButton = document.querySelector('.btn:not(.btn-primary):first-of-type');
+        const exportButton = document.querySelector('.btn:not(.btn-primary):last-of-type');
+
+        if (runButton) {
+            runButton.addEventListener('click', () => this.runSimulation());
+        }
+
+        if (resetButton) {
+            resetButton.addEventListener('click', () => this.resetParameters());
+        }
+
+        if (exportButton) {
+            exportButton.addEventListener('click', () => this.exportData());
+        }
+    }
+
+    /**
+     * Update a parameter value
+     */
+    updateParameter(parameter, value) {
+        this.parameters[parameter] = value;
+        // Could add real-time calculation updates here
+    }
+
+    /**
+     * Validate parameter values
+     */
+    validateParameter(parameter, value, inputElement) {
+        let isValid = true;
+        let errorMessage = '';
+
+        switch (parameter) {
+            case 'bore':
+                if (value < 50 || value > 150) {
+                    isValid = false;
+                    errorMessage = 'Bore must be between 50-150mm';
+                }
+                break;
+            case 'stroke':
+                if (value < 50 || value > 150) {
+                    isValid = false;
+                    errorMessage = 'Stroke must be between 50-150mm';
+                }
+                break;
+            case 'compressionRatio':
+                if (value < 8 || value > 15) {
+                    isValid = false;
+                    errorMessage = 'Compression ratio must be between 8-15';
+                }
+                break;
+            case 'cylinders':
+                if (value < 1 || value > 12) {
+                    isValid = false;
+                    errorMessage = 'Cylinders must be between 1-12';
+                }
+                break;
+            case 'engineSpeed':
+                if (value < 500 || value > 8000) {
+                    isValid = false;
+                    errorMessage = 'Engine speed must be between 500-8000 rpm';
+                }
+                break;
+            case 'load':
+                if (value < 0 || value > 100) {
+                    isValid = false;
+                    errorMessage = 'Load must be between 0-100%';
+                }
+                break;
+            case 'intakeTemp':
+                if (value < -20 || value > 60) {
+                    isValid = false;
+                    errorMessage = 'Intake temperature must be between -20-60°C';
+                }
+                break;
+        }
+
+        if (!isValid) {
+            inputElement.style.borderColor = '#f56565';
+            this.updateStatus(errorMessage, 'error');
+        } else {
+            inputElement.style.borderColor = '#4a5568';
+            if (this.getStatus().includes('Error:')) {
+                this.updateStatus('Ready', 'ready');
+            }
+        }
+
+        return isValid;
+    }
+
+    /**
+     * Run engine simulation
+     */
+    async runSimulation() {
+        if (this.isSimulating) {
+            return;
+        }
+
+        if (!this.worker) {
+            this.updateStatus('Worker not available', 'error');
+            return;
+        }
+
+        // Validate all parameters before running
+        if (!this.validateAllParameters()) {
+            this.updateStatus('Please fix parameter errors', 'error');
+            return;
+        }
+
+        this.isSimulating = true;
+        
+        // Convert temperature to Kelvin for simulation
+        const simulationParams = {
+            ...this.parameters,
+            intakeTemp: this.parameters.intakeTemp + 273.15
+        };
+
+        // Send simulation request to worker
+        this.worker.postMessage({
+            type: 'simulate',
+            data: simulationParams
+        });
+    }
+
+    /**
+     * Validate all parameters
+     */
+    validateAllParameters() {
+        const inputs = document.querySelectorAll('.control-input');
+        let allValid = true;
+
+        inputs.forEach(input => {
+            const value = parseFloat(input.value);
+            const parameter = this.getParameterFromInput(input);
+            
+            if (parameter && !this.validateParameter(parameter, value, input)) {
+                allValid = false;
+            }
+        });
+
+        return allValid;
+    }
+
+    /**
+     * Get parameter name from input element
+     */
+    getParameterFromInput(inputElement) {
+        const value = inputElement.value;
+        const parent = inputElement.closest('.control-group');
+        const label = parent?.querySelector('.control-label')?.textContent;
+        
+        if (label) {
+            if (label.includes('Bore')) return 'bore';
+            if (label.includes('Stroke')) return 'stroke';
+            if (label.includes('Compression')) return 'compressionRatio';
+            if (label.includes('Cylinders')) return 'cylinders';
+            if (label.includes('Engine Speed')) return 'engineSpeed';
+            if (label.includes('Load')) return 'load';
+            if (label.includes('Intake Temperature')) return 'intakeTemp';
+        }
+        
+        return null;
+    }
+
+    /**
+     * Reset parameters to defaults
+     */
+    resetParameters() {
+        const defaultParams = {
+            bore: 86,
+            stroke: 86,
+            compressionRatio: 10.5,
+            cylinders: 4,
+            engineSpeed: 2000,
+            load: 75,
+            intakeTemp: 25
+        };
+
+        this.parameters = { ...defaultParams };
+        
+        // Update input fields
+        const inputs = document.querySelectorAll('.control-input');
+        const values = Object.values(defaultParams);
+        
+        inputs.forEach((input, index) => {
+            if (index < values.length) {
+                input.value = values[index];
+                input.style.borderColor = '#4a5568'; // Reset border color
+            }
+        });
+
+        this.clearResults();
+        this.updateStatus('Parameters reset', 'ready');
+    }
+
+    /**
+     * Update simulation results in the UI
+     */
+    updateResults(data) {
+        const { performance, emissions, cycle } = data;
+        
+        // Update performance values
+        this.updateDataValue(0, performance.power);
+        this.updateDataValue(1, performance.torque);
+        this.updateDataValue(2, performance.bmep);
+        this.updateDataValue(3, performance.efficiency);
+        
+        // Update emissions values
+        this.updateDataValue(4, emissions.nox);
+        this.updateDataValue(5, emissions.co);
+        this.updateDataValue(6, emissions.hc);
+        this.updateDataValue(7, emissions.pm);
+        
+        // Update cycle analysis
+        this.updateDataValue(8, performance.maxPressure);
+        this.updateDataValue(9, performance.maxTemperature);
+        this.updateDataValue(10, '---'); // Pumping loss (placeholder)
+
+        // Update status bar
+        const now = new Date().toLocaleTimeString();
+        const statusItems = document.querySelectorAll('.status-item');
+        if (statusItems.length >= 2) {
+            statusItems[1].innerHTML = `Last Run: ${now}`;
+            if (statusItems.length >= 3) {
+                statusItems[2].innerHTML = `Computation Time: ${data.timestamp - data.timestamp}ms`;
+            }
+        }
+    }
+
+    /**
+     * Update a specific data value in the display
+     */
+    updateDataValue(index, value) {
+        const dataValues = document.querySelectorAll('.data-value');
+        if (dataValues[index]) {
+            dataValues[index].textContent = typeof value === 'number' ? 
+                Math.round(value * 10) / 10 : value;
+        }
+    }
+
+    /**
+     * Clear all result displays
+     */
+    clearResults() {
+        const dataValues = document.querySelectorAll('.data-value');
+        dataValues.forEach(element => {
+            element.textContent = '---';
+        });
+    }
+
+    /**
+     * Update status display
+     */
+    updateStatus(message, type = 'ready') {
+        const statusElement = document.querySelector('.header .status');
+        const statusBarElement = document.querySelector('.status-ready');
+        
+        if (statusElement) {
+            statusElement.textContent = message.toUpperCase();
+        }
+        
+        if (statusBarElement) {
+            statusBarElement.textContent = message;
+            statusBarElement.className = `status-${type}`;
+        }
+    }
+
+    /**
+     * Get current status
+     */
+    getStatus() {
+        const statusElement = document.querySelector('.status-ready');
+        return statusElement ? statusElement.textContent : '';
+    }
+
+    /**
+     * Update parameter displays
+     */
+    updateDisplays() {
+        // This could be used for real-time calculation displays
+        // Currently handled by direct input binding
+    }
+
+    /**
+     * Export simulation data
+     */
+    exportData() {
+        if (!this.lastResults) {
+            this.updateStatus('No data to export', 'error');
+            return;
+        }
+
+        const exportData = {
+            parameters: this.parameters,
+            results: this.lastResults,
+            timestamp: new Date().toISOString()
+        };
+
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `engine_simulation_${Date.now()}.json`;
+        link.click();
+        
+        this.updateStatus('Data exported', 'ready');
+    }
+
+    /**
+     * Store results for export
+     */
+    storeResults(results) {
+        this.lastResults = results;
+    }
+
+    /**
+     * Get current parameter values
+     */
+    getParameters() {
+        return { ...this.parameters };
+    }
+
+    /**
+     * Cleanup resources
+     */
+    destroy() {
+        if (this.worker) {
+            this.worker.terminate();
+            this.worker = null;
+        }
+    }
+}
