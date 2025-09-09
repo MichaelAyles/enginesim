@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine Simulator v1.0</title>
+    <style>
+        /* Engineering Tool Aesthetic - Inspired by Simulink/LabVIEW */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background-color: #2d3748;
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+
+        /* Main Layout Grid */
+        .main-container {
+            display: grid;
+            grid-template-areas: 
+                "header header header"
+                "sidebar canvas properties"
+                "status status status";
+            grid-template-rows: 40px 1fr 24px;
+            grid-template-columns: 280px 1fr 280px;
+            height: 100vh;
+        }
+
+        /* Header Bar */
+        .header {
+            grid-area: header;
+            background: linear-gradient(to bottom, #4a5568, #2d3748);
+            border-bottom: 1px solid #1a202c;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .header .title {
+            color: #63b3ed;
+        }
+
+        .header .spacer {
+            flex: 1;
+        }
+
+        .header .status {
+            color: #68d391;
+            font-size: 12px;
+        }
+
+        /* Sidebar - Control Parameters */
+        .sidebar {
+            grid-area: sidebar;
+            background-color: #1a202c;
+            border-right: 1px solid #2d3748;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        .panel {
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            margin-bottom: 8px;
+            border-radius: 3px;
+        }
+
+        .panel-header {
+            background: linear-gradient(to bottom, #4a5568, #2d3748);
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #cbd5e0;
+            border-bottom: 1px solid #1a202c;
+        }
+
+        .panel-content {
+            padding: 8px;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 11px;
+            color: #a0aec0;
+            margin-bottom: 3px;
+        }
+
+        .control-input {
+            width: 100%;
+            background-color: #1a202c;
+            border: 1px solid #4a5568;
+            color: #e2e8f0;
+            padding: 4px 6px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #63b3ed;
+        }
+
+        /* Main Canvas Area */
+        .canvas-area {
+            grid-area: canvas;
+            background-color: #1a202c;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .visualization-placeholder {
+            border: 2px dashed #4a5568;
+            border-radius: 4px;
+            padding: 40px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        /* Properties Panel */
+        .properties {
+            grid-area: properties;
+            background-color: #1a202c;
+            border-left: 1px solid #2d3748;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        .data-display {
+            background-color: #0f1419;
+            border: 1px solid #2d3748;
+            padding: 8px;
+            margin-bottom: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .data-label {
+            color: #a0aec0;
+        }
+
+        .data-value {
+            color: #68d391;
+            font-weight: bold;
+        }
+
+        .data-unit {
+            color: #718096;
+            font-size: 10px;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            grid-area: status;
+            background: linear-gradient(to bottom, #2d3748, #1a202c);
+            border-top: 1px solid #4a5568;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+        }
+
+        .status-item {
+            margin-right: 20px;
+            color: #a0aec0;
+        }
+
+        .status-ready {
+            color: #68d391;
+        }
+
+        .status-error {
+            color: #f56565;
+        }
+
+        /* Button Styles */
+        .btn {
+            background: linear-gradient(to bottom, #4a5568, #2d3748);
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(to bottom, #2d3748, #1a202c);
+        }
+
+        .btn:active {
+            background: linear-gradient(to bottom, #1a202c, #2d3748);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to bottom, #3182ce, #2c5282);
+            border-color: #2c5282;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to bottom, #2c5282, #2a4365);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <span class="title">Engine Simulator</span>
+            <span class="spacer"></span>
+            <span class="status">READY</span>
+        </div>
+
+        <!-- Sidebar - Control Parameters -->
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-header">Engine Geometry</div>
+                <div class="panel-content">
+                    <div class="control-group">
+                        <label class="control-label">Bore (mm)</label>
+                        <input type="number" class="control-input" value="86" min="50" max="150">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Stroke (mm)</label>
+                        <input type="number" class="control-input" value="86" min="50" max="150">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Compression Ratio</label>
+                        <input type="number" class="control-input" value="10.5" min="8" max="15" step="0.1">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Cylinders</label>
+                        <input type="number" class="control-input" value="4" min="1" max="12">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Operating Conditions</div>
+                <div class="panel-content">
+                    <div class="control-group">
+                        <label class="control-label">Engine Speed (RPM)</label>
+                        <input type="number" class="control-input" value="2000" min="500" max="8000" step="100">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Load (%)</label>
+                        <input type="number" class="control-input" value="75" min="0" max="100">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Intake Temperature (°C)</label>
+                        <input type="number" class="control-input" value="25" min="-20" max="60">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Control</div>
+                <div class="panel-content">
+                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 8px;">Run Simulation</button>
+                    <button class="btn" style="width: 100%; margin-bottom: 8px;">Reset Parameters</button>
+                    <button class="btn" style="width: 100%;">Export Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Canvas Area -->
+        <div class="canvas-area">
+            <div class="visualization-placeholder">
+                <div>Visualization Area</div>
+                <div style="font-size: 12px; margin-top: 8px;">P-V Diagrams, Performance Charts, and 3D Visualizations will appear here</div>
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="properties">
+            <div class="panel">
+                <div class="panel-header">Performance Output</div>
+                <div class="panel-content">
+                    <div class="data-display">
+                        <div class="data-row">
+                            <span class="data-label">Power:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">kW</span></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Torque:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">Nm</span></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">BMEP:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">bar</span></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Efficiency:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">%</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Emissions</div>
+                <div class="panel-content">
+                    <div class="data-display">
+                        <div class="data-row">
+                            <span class="data-label">NOx:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">g/kWh</span></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">CO:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">g/kWh</span></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">HC:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">g/kWh</span></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">PM:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">g/kWh</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">Cycle Analysis</div>
+                <div class="panel-content">
+                    <div class="data-display">
+                        <div class="data-row">
+                            <span class="data-label">Max Pressure:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">bar</span></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Max Temperature:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">K</span></span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Pumping Loss:</span>
+                            <span><span class="data-value">---</span> <span class="data-unit">kW</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span class="status-item">Simulation: <span class="status-ready">Ready</span></span>
+            <span class="status-item">Last Run: Never</span>
+            <span class="status-item">Computation Time: ---</span>
+            <span class="status-item">Engine Simulator v1.0</span>
+        </div>
+    </div>
+
+    <script>
+        // Basic interactivity placeholder
+        document.addEventListener('DOMContentLoaded', function() {
+            const runButton = document.querySelector('.btn-primary');
+            const statusElement = document.querySelector('.status-ready');
+            
+            runButton.addEventListener('click', function() {
+                statusElement.textContent = 'RUNNING...';
+                statusElement.className = 'status-error';
+                
+                // Simulate computation
+                setTimeout(() => {
+                    statusElement.textContent = 'READY';
+                    statusElement.className = 'status-ready';
+                    
+                    // Update placeholder values
+                    const dataValues = document.querySelectorAll('.data-value');
+                    dataValues.forEach((element, index) => {
+                        const sampleValues = ['150.2', '420.8', '12.5', '38.2', '2.1', '0.8', '0.3', '0.05', '85.2', '2180', '2.8'];
+                        if (sampleValues[index]) {
+                            element.textContent = sampleValues[index];
+                        }
+                    });
+                }, 1500);
+            });
+        });
+    </script>
+</body>
+</html>
