@@ -52,11 +52,11 @@ class EngineSimulationWorker {
 
     validateParameters(params) {
         const defaults = {
-            bore: 86,           // mm
-            stroke: 86,         // mm
-            compressionRatio: 10.5,
-            cylinders: 4,
-            engineSpeed: 2000,  // rpm
+            bore: 137,          // mm - 13L diesel engine bore
+            stroke: 150,        // mm - 13L diesel engine stroke  
+            compressionRatio: 16.5, // Typical diesel compression ratio
+            cylinders: 6,       // 6-cylinder engine
+            engineSpeed: 1800,  // rpm - typical diesel speed
             load: 75,          // %
             intakeTemp: 298    // K (25°C)
         };
@@ -65,9 +65,9 @@ class EngineSimulationWorker {
         const validated = { ...defaults, ...params };
         
         // Basic validation
-        if (validated.bore < 50 || validated.bore > 150) throw new Error('Bore must be between 50-150mm');
-        if (validated.stroke < 50 || validated.stroke > 150) throw new Error('Stroke must be between 50-150mm');
-        if (validated.compressionRatio < 8 || validated.compressionRatio > 15) throw new Error('Compression ratio must be between 8-15');
+        if (validated.bore < 50 || validated.bore > 200) throw new Error('Bore must be between 50-200mm');
+        if (validated.stroke < 50 || validated.stroke > 200) throw new Error('Stroke must be between 50-200mm');
+        if (validated.compressionRatio < 12 || validated.compressionRatio > 22) throw new Error('Compression ratio must be between 12-22 (diesel)');
         if (validated.cylinders < 1 || validated.cylinders > 12) throw new Error('Cylinders must be between 1-12');
         if (validated.engineSpeed < 500 || validated.engineSpeed > 8000) throw new Error('Engine speed must be between 500-8000 rpm');
         
@@ -277,18 +277,18 @@ class EngineSimulationWorker {
         // Calculate work per cycle using P-V integration
         let workPerCycle = 0;
         for (let i = 1; i < cycleData.length; i++) {
-            const dV = cycleData[i].volume - cycleData[i-1].volume;
-            const avgP = (cycleData[i].pressure + cycleData[i-1].pressure) / 2;
-            workPerCycle += avgP * dV * 100; // Convert bar·cm³ to J
+            const dV = (cycleData[i].volume - cycleData[i-1].volume) / 1000000; // Convert cm³ to m³
+            const avgP = (cycleData[i].pressure + cycleData[i-1].pressure) / 2 * 100000; // Convert bar to Pa
+            workPerCycle += avgP * dV; // Work in Joules
         }
 
         const displacement = Math.PI * Math.pow(params.bore/2, 2) * params.stroke / 1000; // cm³
-        const imep = workPerCycle / displacement; // bar
+        const imep = (workPerCycle * 1000000) / (displacement * 100000); // bar (convert J/m³ to bar)
         
-        // Power calculations
-        const cyclesPerSecond = params.engineSpeed / 120; // 4-stroke engine
-        const indicatedPower = (workPerCycle * cyclesPerSecond * params.cylinders) / 1000; // kW
-        const mechanicalEfficiency = 0.85;
+        // Power calculations for 4-stroke engine
+        const cyclesPerSecond = params.engineSpeed / 120; // Power strokes per second
+        const indicatedPower = workPerCycle * cyclesPerSecond * params.cylinders / 1000; // kW
+        const mechanicalEfficiency = 0.85; // Typical for diesel engines
         const brakePower = indicatedPower * mechanicalEfficiency;
         
         // Torque calculations

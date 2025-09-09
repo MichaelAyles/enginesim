@@ -23,19 +23,19 @@
                 <div class="panel-content">
                     <div class="control-group">
                         <label class="control-label">Bore (mm)</label>
-                        <input type="number" class="control-input" value="86" min="50" max="150">
+                        <input type="number" class="control-input" value="137" min="50" max="200">
                     </div>
                     <div class="control-group">
                         <label class="control-label">Stroke (mm)</label>
-                        <input type="number" class="control-input" value="86" min="50" max="150">
+                        <input type="number" class="control-input" value="150" min="50" max="200">
                     </div>
                     <div class="control-group">
                         <label class="control-label">Compression Ratio</label>
-                        <input type="number" class="control-input" value="10.5" min="8" max="15" step="0.1">
+                        <input type="number" class="control-input" value="16.5" min="12" max="22" step="0.1">
                     </div>
                     <div class="control-group">
                         <label class="control-label">Cylinders</label>
-                        <input type="number" class="control-input" value="4" min="1" max="12">
+                        <input type="number" class="control-input" value="6" min="1" max="12">
                     </div>
                 </div>
             </div>
@@ -45,7 +45,7 @@
                 <div class="panel-content">
                     <div class="control-group">
                         <label class="control-label">Engine Speed (RPM)</label>
-                        <input type="number" class="control-input" value="2000" min="500" max="8000" step="100">
+                        <input type="number" class="control-input" value="1800" min="500" max="8000" step="100">
                     </div>
                     <div class="control-group">
                         <label class="control-label">Load (%)</label>
@@ -163,11 +163,11 @@
         class EngineSimulator {
             constructor() {
                 this.parameters = {
-                    bore: 86,
-                    stroke: 86,
-                    compressionRatio: 10.5,
-                    cylinders: 4,
-                    engineSpeed: 2000,
+                    bore: 137,           // mm - Typical for 13L/6cyl engine
+                    stroke: 150,         // mm - Typical for 13L diesel
+                    compressionRatio: 16.5,  // Higher CR for diesel
+                    cylinders: 6,        // 6-cylinder engine
+                    engineSpeed: 1800,   // rpm - Typical diesel operating speed
                     load: 75,
                     intakeTemp: 25
                 };
@@ -279,21 +279,21 @@
 
                 switch (parameter) {
                     case 'bore':
-                        if (value < 50 || value > 150) {
+                        if (value < 50 || value > 200) {
                             isValid = false;
-                            errorMessage = 'Bore must be between 50-150mm';
+                            errorMessage = 'Bore must be between 50-200mm';
                         }
                         break;
                     case 'stroke':
-                        if (value < 50 || value > 150) {
+                        if (value < 50 || value > 200) {
                             isValid = false;
-                            errorMessage = 'Stroke must be between 50-150mm';
+                            errorMessage = 'Stroke must be between 50-200mm';
                         }
                         break;
                     case 'compressionRatio':
-                        if (value < 8 || value > 15) {
+                        if (value < 12 || value > 22) {
                             isValid = false;
-                            errorMessage = 'Compression ratio must be between 8-15';
+                            errorMessage = 'Compression ratio must be between 12-22 (diesel)';
                         }
                         break;
                     case 'cylinders':
@@ -354,11 +354,11 @@
             
             resetParameters() {
                 const defaultParams = {
-                    bore: 86,
-                    stroke: 86,
-                    compressionRatio: 10.5,
-                    cylinders: 4,
-                    engineSpeed: 2000,
+                    bore: 137,
+                    stroke: 150,
+                    compressionRatio: 16.5,
+                    cylinders: 6,
+                    engineSpeed: 1800,
                     load: 75,
                     intakeTemp: 25
                 };
@@ -366,7 +366,7 @@
                 this.parameters = { ...defaultParams };
                 
                 const inputs = document.querySelectorAll('.control-input');
-                const values = [86, 86, 10.5, 4, 2000, 75, 25];
+                const values = [137, 150, 16.5, 6, 1800, 75, 25];
                 
                 inputs.forEach((input, index) => {
                     if (index < values.length) {
