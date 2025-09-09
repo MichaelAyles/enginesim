@@ -107,15 +107,16 @@ export class EngineControlsUI {
      * Bind event listeners to UI controls
      */
     bindEventListeners() {
-        // Get all parameter input elements
+        // Get all parameter input elements by position (more reliable than value-based selectors)
+        const inputElements = document.querySelectorAll('.control-input');
         const inputs = {
-            bore: document.querySelector('input[value="86"]:first-of-type'),
-            stroke: document.querySelector('input[value="86"]:last-of-type'),
-            compressionRatio: document.querySelector('input[value="10.5"]'),
-            cylinders: document.querySelector('input[value="4"]'),
-            engineSpeed: document.querySelector('input[value="2000"]'),
-            load: document.querySelector('input[value="75"]'),
-            intakeTemp: document.querySelector('input[value="25"]')
+            bore: inputElements[0],                    // First input - Bore
+            stroke: inputElements[1],                  // Second input - Stroke  
+            compressionRatio: inputElements[2],        // Third input - Compression Ratio
+            cylinders: inputElements[3],               // Fourth input - Cylinders
+            engineSpeed: inputElements[4],             // Fifth input - Engine Speed
+            load: inputElements[5],                    // Sixth input - Load
+            intakeTemp: inputElements[6]               // Seventh input - Intake Temp
         };
 
         // Add event listeners for parameter changes
@@ -264,15 +265,18 @@ export class EngineControlsUI {
      * Validate all parameters
      */
     validateAllParameters() {
-        const inputs = document.querySelectorAll('.control-input');
+        const inputElements = document.querySelectorAll('.control-input');
+        const parameters = ['bore', 'stroke', 'compressionRatio', 'cylinders', 'engineSpeed', 'load', 'intakeTemp'];
         let allValid = true;
 
-        inputs.forEach(input => {
-            const value = parseFloat(input.value);
-            const parameter = this.getParameterFromInput(input);
-            
-            if (parameter && !this.validateParameter(parameter, value, input)) {
-                allValid = false;
+        inputElements.forEach((input, index) => {
+            if (index < parameters.length) {
+                const value = parseFloat(input.value);
+                const parameter = parameters[index];
+                
+                if (!this.validateParameter(parameter, value, input)) {
+                    allValid = false;
+                }
             }
         });
 
@@ -318,7 +322,15 @@ export class EngineControlsUI {
         
         // Update input fields
         const inputs = document.querySelectorAll('.control-input');
-        const values = Object.values(defaultParams);
+        const values = [
+            defaultParams.bore,
+            defaultParams.stroke, 
+            defaultParams.compressionRatio,
+            defaultParams.cylinders,
+            defaultParams.engineSpeed,
+            defaultParams.load,
+            defaultParams.intakeTemp
+        ];
         
         inputs.forEach((input, index) => {
             if (index < values.length) {
