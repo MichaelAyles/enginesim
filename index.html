@@ -443,6 +443,20 @@
                 this.ctx = this.canvas.getContext('2d');
                 canvasArea.appendChild(this.canvas);
 
+                // Create data table container
+                this.dataTableContainer = document.createElement('div');
+                this.dataTableContainer.style.cssText = `
+                    display: none;
+                    width: 100%;
+                    height: 100%;
+                    overflow: auto;
+                    background: #0f1419;
+                    font-family: 'Consolas', monospace;
+                    font-size: 10px;
+                    border: 1px solid #4a5568;
+                `;
+                canvasArea.appendChild(this.dataTableContainer);
+
                 // Create chart controls
                 this.createChartControls(canvasArea);
             }
@@ -469,6 +483,7 @@
                 chartTypeSelect.innerHTML = `
                     <option value="pv-diagram">P-V Diagram</option>
                     <option value="angle-plot">Angle Plot</option>
+                    <option value="data-table">Data Table</option>
                 `;
                 
                 chartTypeSelect.addEventListener('change', (e) => {
@@ -483,14 +498,22 @@
             }
             
             updateVisualization(cycleData) {
-                if (!this.ctx || !cycleData || !cycleData.length) return;
+                if (!cycleData || !cycleData.length) return;
 
-                this.clearCanvas();
-
-                if (this.chartType === 'pv-diagram') {
-                    this.drawPVDiagram(cycleData);
+                if (this.chartType === 'data-table') {
+                    this.canvas.style.display = 'none';
+                    this.dataTableContainer.style.display = 'block';
+                    this.updateDataTable(cycleData);
                 } else {
-                    this.drawAnglePlot(cycleData);
+                    this.canvas.style.display = 'block';
+                    this.dataTableContainer.style.display = 'none';
+                    this.clearCanvas();
+                    
+                    if (this.chartType === 'pv-diagram') {
+                        this.drawPVDiagram(cycleData);
+                    } else {
+                        this.drawAnglePlot(cycleData);
+                    }
                 }
             }
             
@@ -608,6 +631,146 @@
                 this.ctx.font = '12px Consolas';
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText('Crank Angle (degrees)', this.canvas.width / 2, this.canvas.height - 10);
+            }
+            
+            updateDataTable(cycleData) {
+                if (!cycleData.length) return;
+
+                const table = document.createElement('table');
+                table.style.cssText = `
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 9px;
+                    color: #e2e8f0;
+                `;
+
+                // Create header
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                
+                const headers = [
+                    'Angle°', 'Volume cm³', 'Pressure bar', 'Temperature K', 'Piston Pos mm',
+                    'Piston Vel m/s', 'Piston Acc m/s²', 'Mass kg', 'Density kg/m³', 'Comp Ratio',
+                    'Heat Release J/°', 'Heat Total J', 'Heat Transfer J/°', 'HT Coeff W/m²K', 
+                    'Surface cm²', 'Mean Piston Speed m/s', 'Gas Vel m/s', 'Phase', 
+                    'Intake', 'Exhaust', 'Combustion', 'Progress %'
+                ];
+
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.style.cssText = `
+                        border: 1px solid #4a5568;
+                        padding: 4px;
+                        background: #2d3748;
+                        color: #cbd5e0;
+                        font-weight: bold;
+                        text-align: center;
+                        position: sticky;
+                        top: 0;
+                        font-size: 8px;
+                        min-width: 60px;
+                    `;
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Create body with all data points (0.1° resolution = 7200 points)
+                const tbody = document.createElement('tbody');
+                
+                // Show every 5th data point for performance (0.5° resolution = 1440 points)
+                const sampleRate = 5;
+                
+                for (let i = 0; i < cycleData.length; i += sampleRate) {
+                    const data = cycleData[i];
+                    const row = document.createElement('tr');
+                    
+                    const values = [
+                        data.angle || 0,
+                        data.volume || 0,
+                        data.pressure || 0,
+                        data.temperature || 0,
+                        data.pistonPosition || 0,
+                        data.pistonVelocity || 0,
+                        data.pistonAcceleration || 0,
+                        data.massInCylinder || 0,
+                        data.density || 0,
+                        data.compressionRatio || 0,
+                        data.heatRelease || 0,
+                        data.heatReleaseTotal || 0,
+                        data.heatTransfer || 0,
+                        data.heatTransferCoeff || 0,
+                        data.surfaceArea || 0,
+                        data.meanPistonSpeed || 0,
+                        data.gasVelocity || 0,
+                        data.strokePhase || 'Unknown',
+                        data.intakeValveOpen ? '●' : '○',
+                        data.exhaustValveOpen ? '●' : '○',
+                        data.combustionActive ? '●' : '○',
+                        data.cycleProgress || 0
+                    ];
+
+                    // Color code rows by stroke phase
+                    let backgroundColor = '#1a202c';
+                    if (data.strokePhase === 'Intake') backgroundColor = '#1a365d';
+                    else if (data.strokePhase === 'Compression') backgroundColor = '#744210';
+                    else if (data.strokePhase === 'Power') backgroundColor = '#22543d';
+                    else if (data.strokePhase === 'Exhaust') backgroundColor = '#702459';
+
+                    values.forEach((value, index) => {
+                        const td = document.createElement('td');
+                        td.style.cssText = `
+                            border: 1px solid #4a5568;
+                            padding: 2px 4px;
+                            text-align: ${index === 17 ? 'left' : 'right'};
+                            background: ${backgroundColor};
+                            font-size: 8px;
+                        `;
+                        
+                        // Format numbers appropriately
+                        if (typeof value === 'number') {
+                            if (index <= 16) { // Numeric values
+                                td.textContent = Math.round(value * 1000) / 1000;
+                            } else { // Progress percentage
+                                td.textContent = Math.round(value * 10) / 10 + '%';
+                            }
+                        } else {
+                            td.textContent = value;
+                        }
+                        
+                        row.appendChild(td);
+                    });
+                    
+                    tbody.appendChild(row);
+                }
+                
+                table.appendChild(tbody);
+
+                // Add summary info
+                const summaryDiv = document.createElement('div');
+                summaryDiv.style.cssText = `
+                    padding: 10px;
+                    background: #2d3748;
+                    color: #cbd5e0;
+                    font-size: 11px;
+                    border-bottom: 1px solid #4a5568;
+                `;
+                summaryDiv.innerHTML = `
+                    <strong>Data Table Summary:</strong><br>
+                    • Total data points: ${cycleData.length} (0.1° resolution)<br>
+                    • Displayed: ${Math.ceil(cycleData.length / sampleRate)} rows (0.5° sampling for performance)<br>
+                    • Color coding: <span style="background:#1a365d; padding:2px 4px;">Intake</span> 
+                    <span style="background:#744210; padding:2px 4px;">Compression</span> 
+                    <span style="background:#22543d; padding:2px 4px;">Power</span> 
+                    <span style="background:#702459; padding:2px 4px;">Exhaust</span><br>
+                    • Valve status: ● Open, ○ Closed
+                `;
+
+                this.dataTableContainer.innerHTML = '';
+                this.dataTableContainer.appendChild(summaryDiv);
+                this.dataTableContainer.appendChild(table);
             }
             
             exportData() {
